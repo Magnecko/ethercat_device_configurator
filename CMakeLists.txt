@@ -65,7 +65,7 @@ LIST(APPEND PACKAGE_DEPENDENCIES ament_cmake ethercat_sdk_master yaml-cpp)
 
 file(GLOB_RECURSE SRC_FILES ./src/*.c*)
 
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME} SHARED
   ${SRC_FILES}
 )
 
