@@ -29,6 +29,11 @@
 #include "mps_ethercat_sdk/MPSDrive.hpp"
 #endif
 
+/*Magnecko*/
+#ifdef _MAGNECKO_DRIVE_FOUND_
+#include "magnecko_ethercat_sdk/magneckoDrive.hpp"
+#endif
+
 /*Maxon*/
 #ifdef _MAXON_FOUND_
 #include "maxon_epos_ethercat_sdk/Maxon.hpp"
@@ -170,6 +175,10 @@ void EthercatDeviceConfigurator::parseFile(std::string path)
                 {
                   entry.type = EthercatSlaveType::MPSDrive;
                 }
+                else if(type_str == "magneckoDrive")
+                {
+                  entry.type = EthercatSlaveType::magneckoDrive;
+                }
                 else if(type_str == "Maxon")
                 {
                     entry.type = EthercatSlaveType::Maxon;
@@ -284,6 +293,16 @@ void EthercatDeviceConfigurator::setup(bool startup)
             throw std::runtime_error("mps_ethercat_sdk not availabe, dependency not found.");
 #endif
           }
+            break;
+        case EthercatSlaveType::magneckoDrive:
+        {
+#ifdef _MAGNECKO_DRIVE_FOUND_
+            std::string configuration_file_path = handleFilePath(entry.config_file_path,m_setup_file_path);
+            slave = magnecko_ethercat_sdk::magneckoDrive::deviceFromFile(configuration_file_path, entry.name, entry.ethercat_address);
+#else
+            throw std::runtime_error(" [EthercatDeviceConfigurator]magnecko_ethercat_sdk not availabe.");
+#endif
+        }
             break;
         case EthercatSlaveType::Maxon:
         {

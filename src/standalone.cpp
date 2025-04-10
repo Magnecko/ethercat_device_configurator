@@ -46,6 +46,11 @@
 #ifdef _MPSDRIVE_FOUND_
 #include <mps_ethercat_sdk/MPSDrive.hpp>
 #endif
+
+#ifdef _MAGNECKO_DRIVE_FOUND_
+#include <magnecko_ethercat_sdk/magneckoDrive.hpp>
+#endif
+
 #ifdef _MAXON_FOUND_
 #include <maxon_epos_ethercat_sdk/Maxon.hpp>
 #endif
