@@ -242,6 +242,16 @@ void EthercatDeviceConfigurator::parseFile(std::string path)
                 throw std::runtime_error("[EthercatDeviceConfigurator] Node: " + child.Tag() + " has no entry ethercat_bus");
             }
 
+            if(child["actuator_number"])
+            {
+                entry.actuator_number = child["actuator_number"].as<int>();
+            }
+            else
+            {
+                throw std::runtime_error("[EthercatDeviceConfigurator] Node: " + child.Tag() + " has no entry actuator_number");
+            }
+
+
             //ethercat_pdo_type - entry
             if(entry.type == EthercatSlaveType::Anydrive || entry.type == EthercatSlaveType::Rokubi)
             {
@@ -298,7 +308,7 @@ void EthercatDeviceConfigurator::setup(bool startup)
         {
 #ifdef _MAGNECKO_DRIVE_FOUND_
             std::string configuration_file_path = handleFilePath(entry.config_file_path,m_setup_file_path);
-            slave = magnecko_ethercat_sdk::magneckoDrive::deviceFromFile(configuration_file_path, entry.name, entry.ethercat_address);
+            slave = magnecko_ethercat_sdk::magneckoDrive::deviceFromFile(configuration_file_path, entry.name, entry.ethercat_address, entry.actuator_number);
 #else
             throw std::runtime_error(" [EthercatDeviceConfigurator]magnecko_ethercat_sdk not availabe.");
 #endif

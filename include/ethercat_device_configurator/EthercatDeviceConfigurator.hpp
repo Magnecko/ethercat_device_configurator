@@ -42,6 +42,7 @@ public:
         EthercatSlaveType type;
         std::string name;
         std::string config_file_path;
+        uint32_t actuator_number;
 
         uint32_t ethercat_address;
         std::string ethercat_bus;
