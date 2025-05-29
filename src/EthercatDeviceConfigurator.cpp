@@ -32,6 +32,7 @@
 /*Magnecko*/
 #ifdef _MAGNECKO_DRIVE_FOUND_
 #include "magnecko_ethercat_sdk/magneckoDrive.hpp"
+#include "magnecko_ethercat_sdk/DummySlave.hpp"
 #endif
 
 /*Maxon*/
@@ -191,6 +192,9 @@ void EthercatDeviceConfigurator::parseFile(std::string path)
                 {
                     entry.type = EthercatSlaveType::Rokubi;
                 }
+                else if(type_str == "Dummy"){
+                    entry.type = EthercatSlaveType::Dummy;
+                }
                 else
                 {
                     throw std::runtime_error("[EthercatDeviceConfigurator] " +type_str + " is an undefined type of ethercat device");
@@ -217,7 +221,7 @@ void EthercatDeviceConfigurator::parseFile(std::string path)
             {
                 entry.config_file_path = child["configuration_file"].as<std::string>();
             }
-            else
+            else if (entry.type != EthercatSlaveType::Dummy)
             {
                 throw std::runtime_error("[EthercatDeviceConfigurator] Node: " + child.Tag() + " has no entry configuration_file");
             }
@@ -246,8 +250,8 @@ void EthercatDeviceConfigurator::parseFile(std::string path)
             {
                 entry.actuator_number = child["actuator_number"].as<int>();
             }
-            else
-            {
+            else if (entry.type == EthercatSlaveType::magneckoDrive)
+            { 
                 throw std::runtime_error("[EthercatDeviceConfigurator] Node: " + child.Tag() + " has no entry actuator_number");
             }
 
@@ -310,7 +314,16 @@ void EthercatDeviceConfigurator::setup(bool startup)
             std::string configuration_file_path = handleFilePath(entry.config_file_path,m_setup_file_path);
             slave = magnecko_ethercat_sdk::magneckoDrive::deviceFromFile(configuration_file_path, entry.name, entry.ethercat_address, entry.actuator_number);
 #else
-            throw std::runtime_error(" [EthercatDeviceConfigurator]magnecko_ethercat_sdk not availabe.");
+            throw std::runtime_error(" [EthercatDeviceConfigurator] magnecko_ethercat_sdk not availabe.");
+#endif
+        }
+            break;
+        case EthercatSlaveType::Dummy:
+        {
+#ifdef _MAGNECKO_DRIVE_FOUND_
+            slave = std::make_shared<magnecko_ethercat_sdk::DummySlave>(entry.name, entry.ethercat_address);
+#else
+            throw std::runtime_error(" [EthercatDeviceConfigurator] magnecko_ethercat_sdk not availabe.");
 #endif
         }
             break;

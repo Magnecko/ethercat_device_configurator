@@ -34,6 +34,7 @@ public:
         Maxon,
         Anydrive,
         Rokubi,
+        Dummy,
         NA
     };
 
