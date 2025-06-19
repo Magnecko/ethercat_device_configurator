@@ -69,6 +69,7 @@ static bool path_exists(std::string& path)
 EthercatDeviceConfigurator::EthercatDeviceConfigurator(std::string path, bool startup):
     m_setup_file_path(path)
 {
+    std::cout << "configuring" << std::endl;
     parseFile(m_setup_file_path);
     setup(startup);
     MELO_DEBUG("[EthercatDeviceConfigurator] Parsing and setup finished");
@@ -292,11 +293,11 @@ void EthercatDeviceConfigurator::setup(bool startup)
         {
 #ifdef _ELMO_FOUND_
             std::string configuration_file_path = handleFilePath(entry.config_file_path,m_setup_file_path);
-            slave = elmo::Elmo::deviceFromFile(configuration_file_path, entry.name, entry.ethercat_address);
+            slave = elmo::Elmo::deviceFromFile(configuration_file_path, entry.name, entry.ethercat_address);    
 #else
             throw std::runtime_error("elmo_ethercat_sdk not availabe.");
 #endif
-
+            break;
         }
           case EthercatSlaveType::MPSDrive:
           {
