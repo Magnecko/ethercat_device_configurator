@@ -39,6 +39,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
   <depend>elmo_ethercat_sdk</depend>
   <depend>mps_ethercat_sdk</depend>
   <depend>maxon_epos_ethercat_sdk</depend>
+  <depend>magnecko_ethercat_sdk</depend>
   <depend>ek1100</depend>
   <depend>el3102</depend>
   <depend>rokubimini_rsl_ethercat_slave</depend>

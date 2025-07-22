@@ -35,7 +35,7 @@ class EthercatDeviceConfigurator {
   typedef std::shared_ptr<EthercatDeviceConfigurator> SharedPtr;
 
   // Type ethercat slave device. If you want to wire in a new slave device type, add an entry to this enum
-  enum class EthercatSlaveType { Elmo, MPSDrive, Maxon, Anydrive, Rokubi, EK1100, EL3102, NA };
+  enum class EthercatSlaveType { Elmo, MPSDrive, magneckoDrive, Maxon, Anydrive, Rokubi, EK1100, EL3102, Dummy, NA };
 
   struct EthercatSlaveEntry {
     EthercatSlaveType type{EthercatSlaveType::Anydrive};
@@ -47,6 +47,7 @@ class EthercatDeviceConfigurator {
     uint32_t ethercat_address{0}; //default is invalid address.
     std::string ethercat_bus{};
     std::string ethercat_pdo_type{};
+    uint32_t actuator_number;
   };
   /**
    * @brief EthercatDeviceConfigurator
