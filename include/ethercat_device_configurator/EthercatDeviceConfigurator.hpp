@@ -31,6 +31,7 @@ public:
         Elmo,
         MPSDrive,
         magneckoDrive,
+        magneckoEpm,
         Maxon,
         Anydrive,
         Rokubi,

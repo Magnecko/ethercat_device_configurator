@@ -181,6 +181,9 @@ void EthercatDeviceConfigurator::parseFile(std::string path)
                 {
                   entry.type = EthercatSlaveType::magneckoDrive;
                 }
+                else if(type_str == "magneckoEPM"){
+                    entry.type = EthercatSlaveType::magneckoEpm;
+                }
                 else if(type_str == "Maxon")
                 {
                     entry.type = EthercatSlaveType::Maxon;
@@ -251,7 +254,7 @@ void EthercatDeviceConfigurator::parseFile(std::string path)
             {
                 entry.actuator_number = child["actuator_number"].as<int>();
             }
-            else if (entry.type == EthercatSlaveType::magneckoDrive)
+            else if (entry.type == EthercatSlaveType::magneckoDrive || entry.type == EthercatSlaveType::magneckoEpm)
             { 
                 throw std::runtime_error("[EthercatDeviceConfigurator] Node: " + child.Tag() + " has no entry actuator_number");
             }
@@ -310,6 +313,16 @@ void EthercatDeviceConfigurator::setup(bool startup)
           }
             break;
         case EthercatSlaveType::magneckoDrive:
+        {
+#ifdef _MAGNECKO_DRIVE_FOUND_
+            std::string configuration_file_path = handleFilePath(entry.config_file_path,m_setup_file_path);
+            slave = magnecko_ethercat_sdk::magneckoDrive::deviceFromFile(configuration_file_path, entry.name, entry.ethercat_address, entry.actuator_number);
+#else
+            throw std::runtime_error(" [EthercatDeviceConfigurator] magnecko_ethercat_sdk not availabe.");
+#endif
+        }
+            break;
+        case EthercatSlaveType::magneckoEpm:
         {
 #ifdef _MAGNECKO_DRIVE_FOUND_
             std::string configuration_file_path = handleFilePath(entry.config_file_path,m_setup_file_path);
