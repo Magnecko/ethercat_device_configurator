@@ -35,6 +35,10 @@
 #include "magnecko_ethercat_sdk/DummySlave.hpp"
 #endif
 
+#ifdef _MAGNECKO_EPM_FOUND_
+#include "magnecko_epm_sdk/magneckoEPM.hpp"
+#endif
+
 /*Maxon*/
 #ifdef _MAXON_FOUND_
 #include "maxon_epos_ethercat_sdk/Maxon.hpp"
@@ -182,7 +186,7 @@ void EthercatDeviceConfigurator::parseFile(std::string path)
                   entry.type = EthercatSlaveType::magneckoDrive;
                 }
                 else if(type_str == "magneckoEPM"){
-                    entry.type = EthercatSlaveType::magneckoEpm;
+                    entry.type = EthercatSlaveType::magneckoEPM;
                 }
                 else if(type_str == "Maxon")
                 {
@@ -254,7 +258,7 @@ void EthercatDeviceConfigurator::parseFile(std::string path)
             {
                 entry.actuator_number = child["actuator_number"].as<int>();
             }
-            else if (entry.type == EthercatSlaveType::magneckoDrive || entry.type == EthercatSlaveType::magneckoEpm)
+            else if (entry.type == EthercatSlaveType::magneckoDrive || entry.type == EthercatSlaveType::magneckoEPM)
             { 
                 throw std::runtime_error("[EthercatDeviceConfigurator] Node: " + child.Tag() + " has no entry actuator_number");
             }
@@ -322,13 +326,13 @@ void EthercatDeviceConfigurator::setup(bool startup)
 #endif
         }
             break;
-        case EthercatSlaveType::magneckoEpm:
+        case EthercatSlaveType::magneckoEPM:
         {
-#ifdef _MAGNECKO_DRIVE_FOUND_
+#ifdef _MAGNECKO_EPM_FOUND_
             std::string configuration_file_path = handleFilePath(entry.config_file_path,m_setup_file_path);
-            slave = magnecko_ethercat_sdk::magneckoDrive::deviceFromFile(configuration_file_path, entry.name, entry.ethercat_address, entry.actuator_number);
+            slave = magnecko_epm_sdk::magneckoEPM::deviceFromFile(configuration_file_path, entry.name, entry.ethercat_address, entry.actuator_number);
 #else
-            throw std::runtime_error(" [EthercatDeviceConfigurator] magnecko_ethercat_sdk not availabe.");
+            throw std::runtime_error(" [EthercatDeviceConfigurator] magnecko_epm_sdk not availabe.");
 #endif
         }
             break;
