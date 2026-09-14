@@ -149,6 +149,14 @@ void EthercatDeviceConfigurator::parseFile(std::string path)
         {
             throw std::runtime_error("[EthercatDeviceConfigurator] Node update_rate_too_low_warn_threshold missing in ethercat_master");
         }
+        if(ecat_master_node["do_bus_diagnosis"])
+        {
+            m_master_configuration.doBusDiagnosis = ecat_master_node["do_bus_diagnosis"].as<bool>();
+        }
+        if(ecat_master_node["log_error_counters"])
+        {
+            m_master_configuration.logErrorCounters = ecat_master_node["log_error_counters"].as<bool>();
+        }
     }
     else
     {
