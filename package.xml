@@ -30,17 +30,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
   <depend>ethercat_sdk_master</depend>
   <depend>yaml-cpp</depend>
-  <!-->
-      Optional dependencies.
-      Any single drive sdk or any combination of sdks may be used.
-  <-->
-  <depend>anydrive</depend>
-  <depend>elmo_ethercat_sdk</depend>
-  <depend>mps_ethercat_sdk</depend>
+  <!-- Optional drive SDKs. CMake finds them QUIET; only the ones used by magnecko are declared. -->
   <depend>magnecko_ethercat_sdk</depend>
   <depend>magnecko_epm_sdk</depend>
-  <depend>maxon_epos_ethercat_sdk</depend>
-  <depend>rokubimini_rsl_ethercat</depend>
   <export>
     <build_type>ament_cmake</build_type>
   </export>
