@@ -12,7 +12,7 @@ ethercat_devices:
   - type:               MPSDrive
     name:               MPSTestDriver
     configuration_file: device_configurations/MPSDrive.yaml
-    ethercat_bus:       enx9cebe88394dd
+    ethercat_bus:       enx9cebe88394dd   # or auto: the one wired interface on which slaves answer
     ethercat_address:   1
 #
 #  - type:               Anydrive
