@@ -29,6 +29,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>ethercat_sdk_master</depend>
+  <depend>soem_interface_rsl</depend>
   <depend>yaml-cpp</depend>
   <!-- Optional drive SDKs. CMake finds them QUIET; only the ones used by magnecko are declared. -->
   <depend>magnecko_ethercat_sdk</depend>

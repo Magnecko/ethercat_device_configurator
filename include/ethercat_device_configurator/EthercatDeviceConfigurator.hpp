@@ -45,7 +45,6 @@ public:
         EthercatSlaveType type;
         std::string name;
         std::string config_file_path;
-        // Not given: the drive doesn't check its actuator number.
         std::optional<uint32_t> actuator_number;
 
         uint32_t ethercat_address;

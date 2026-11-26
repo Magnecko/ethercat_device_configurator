@@ -29,6 +29,7 @@ add_definitions(-DMELO_USE_COUT)
 find_package(yaml-cpp REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(ethercat_sdk_master REQUIRED)
+find_package(soem_interface_rsl REQUIRED)
 
 find_package(anydrive QUIET)
 find_package(elmo_ethercat_sdk QUIET)
@@ -71,7 +72,7 @@ foreach(sdk ${PACKAGE_DEPENDENCIES})
   message("Found EtherCAT device sdk: " ${sdk})
 endforeach()
 
-LIST(APPEND PACKAGE_DEPENDENCIES ament_cmake ethercat_sdk_master yaml-cpp)
+LIST(APPEND PACKAGE_DEPENDENCIES ament_cmake ethercat_sdk_master soem_interface_rsl yaml-cpp)
 
 file(GLOB_RECURSE SRC_FILES ./src/*.c*)
 

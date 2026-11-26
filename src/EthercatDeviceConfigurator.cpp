@@ -52,13 +52,11 @@
 /*yaml-cpp*/
 #include "yaml-cpp/yaml.h"
 
-/*soem*/
-#include <soem_rsl/ethercat.h>
-
-#include <algorithm>
-#include <sstream>
+#include <soem_interface_rsl/EthercatBusBase.hpp>
 
 /*std*/
+#include <algorithm>
+#include <sstream>
 #if __GNUC__ < 8
 #include <experimental/filesystem>
 #else
@@ -88,18 +86,6 @@ bool isScannedInterface(const std::string& name)
             return false;
     }
     return true;
-}
-
-// The number of slaves that answer a broadcast read on the interface, -1 if it can't be opened (needs CAP_NET_RAW).
-// Runs before any master exists, so SOEM's default context is free. The read changes nothing on the slaves.
-int countSlaves(const std::string& name)
-{
-    if(ec_init(name.c_str()) <= 0)
-        return -1;
-    uint16 slaveType = 0;
-    const int wkc = ec_BRD(0x0000, ECT_REG_TYPE, sizeof(slaveType), &slaveType, EC_TIMEOUTSAFE);
-    ec_close();
-    return wkc > 0 ? wkc : 0;
 }
 }
 
@@ -340,22 +326,19 @@ void EthercatDeviceConfigurator::resolveAutoBus()
 
     std::vector<std::string> found;
     std::stringstream scanned;
-    ec_adaptert* adapters = ec_find_adapters();
-    for(ec_adaptert* adapter = adapters; adapter != nullptr; adapter = adapter->next)
+    for(const auto& name : soem_interface_rsl::EthercatBusBase::getAvailableBusses())
     {
-        const std::string name = adapter->name;
         if(!isScannedInterface(name))
             continue;
-        const int slaves = countSlaves(name);
+        const int slaves = soem_interface_rsl::EthercatBusBase::countSlaves(name);
         scanned << (scanned.tellp() > 0 ? ", " : "") << name;
         if(slaves < 0)
-            scanned << " (can't be opened: run as root or with CAP_NET_RAW)";
+            scanned << " (can't be opened, e.g. without CAP_NET_RAW)";
         else
             scanned << " (" << slaves << " slaves)";
         if(slaves > 0)
             found.push_back(name);
     }
-    ec_free_adapters(adapters);
     if(scanned.tellp() == 0)
         scanned << "no wired interface";
 
