@@ -52,6 +52,12 @@
 /*yaml-cpp*/
 #include "yaml-cpp/yaml.h"
 
+/*soem*/
+#include <soem_rsl/ethercat.h>
+
+#include <algorithm>
+#include <sstream>
+
 /*std*/
 #if __GNUC__ < 8
 #include <experimental/filesystem>
@@ -67,6 +73,34 @@ static bool path_exists(std::string& path)
     #else
     return std::filesystem::exists(path);
     #endif
+}
+
+namespace
+{
+const std::string AUTO_BUS = "auto";
+
+// Loopback, Wi-Fi and virtual interfaces don't lead to a drive, so the scan leaves them out.
+bool isScannedInterface(const std::string& name)
+{
+    for(const char* prefix : {"lo", "wl", "docker", "br-", "veth", "virbr", "tailscale", "tun", "tap"})
+    {
+        if(name.rfind(prefix, 0) == 0)
+            return false;
+    }
+    return true;
+}
+
+// The number of slaves that answer a broadcast read on the interface, -1 if it can't be opened (needs CAP_NET_RAW).
+// Runs before any master exists, so SOEM's default context is free. The read changes nothing on the slaves.
+int countSlaves(const std::string& name)
+{
+    if(ec_init(name.c_str()) <= 0)
+        return -1;
+    uint16 slaveType = 0;
+    const int wkc = ec_BRD(0x0000, ECT_REG_TYPE, sizeof(slaveType), &slaveType, EC_TIMEOUTSAFE);
+    ec_close();
+    return wkc > 0 ? wkc : 0;
+}
 }
 
 
@@ -252,7 +286,7 @@ void EthercatDeviceConfigurator::parseFile(std::string path)
                 throw std::runtime_error("[EthercatDeviceConfigurator] Node: " + child.Tag() + " has no entry ethercat_bus_address");
             }
 
-            //ethercat_bus - entry
+            //ethercat_bus - entry, "auto": scanned for
             if(child["ethercat_bus"])
             {
                 entry.ethercat_bus = child["ethercat_bus"].as<std::string>();
@@ -262,12 +296,13 @@ void EthercatDeviceConfigurator::parseFile(std::string path)
                 throw std::runtime_error("[EthercatDeviceConfigurator] Node: " + child.Tag() + " has no entry ethercat_bus");
             }
 
+            //actuator_number - entry, optional for a magneckoDrive (then not checked)
             if(child["actuator_number"])
             {
                 entry.actuator_number = child["actuator_number"].as<int>();
             }
-            else if (entry.type == EthercatSlaveType::magneckoDrive || entry.type == EthercatSlaveType::magneckoEPM)
-            { 
+            else if (entry.type == EthercatSlaveType::magneckoEPM)
+            {
                 throw std::runtime_error("[EthercatDeviceConfigurator] Node: " + child.Tag() + " has no entry actuator_number");
             }
 
@@ -293,6 +328,53 @@ void EthercatDeviceConfigurator::parseFile(std::string path)
         throw std::runtime_error("[EthercatDeviceConfigurator] Node ethercat_devices missing in yaml");
     }
 
+    resolveAutoBus();
+}
+
+void EthercatDeviceConfigurator::resolveAutoBus()
+{
+    const bool anyAuto = std::any_of(m_slave_entries.begin(), m_slave_entries.end(),
+                                     [](const EthercatSlaveEntry& entry) { return entry.ethercat_bus == AUTO_BUS; });
+    if(!anyAuto)
+        return;
+
+    std::vector<std::string> found;
+    std::stringstream scanned;
+    ec_adaptert* adapters = ec_find_adapters();
+    for(ec_adaptert* adapter = adapters; adapter != nullptr; adapter = adapter->next)
+    {
+        const std::string name = adapter->name;
+        if(!isScannedInterface(name))
+            continue;
+        const int slaves = countSlaves(name);
+        scanned << (scanned.tellp() > 0 ? ", " : "") << name;
+        if(slaves < 0)
+            scanned << " (can't be opened: run as root or with CAP_NET_RAW)";
+        else
+            scanned << " (" << slaves << " slaves)";
+        if(slaves > 0)
+            found.push_back(name);
+    }
+    ec_free_adapters(adapters);
+    if(scanned.tellp() == 0)
+        scanned << "no wired interface";
+
+    if(found.empty())
+    {
+        throw std::runtime_error("[EthercatDeviceConfigurator] ethercat_bus auto: no EtherCAT slave answers; is it "
+                                 "plugged in and powered? Scanned: " + scanned.str());
+    }
+    if(found.size() > 1)
+    {
+        throw std::runtime_error("[EthercatDeviceConfigurator] ethercat_bus auto: EtherCAT slaves answer on several "
+                                 "interfaces, set ethercat_bus to one of them. Scanned: " + scanned.str());
+    }
+    MELO_INFO_STREAM("[EthercatDeviceConfigurator] ethercat_bus auto: using " << found.front() << ". Scanned: " << scanned.str());
+    for(auto& entry : m_slave_entries)
+    {
+        if(entry.ethercat_bus == AUTO_BUS)
+            entry.ethercat_bus = found.front();
+    }
 }
 
 void EthercatDeviceConfigurator::setup(bool startup)
@@ -338,7 +420,7 @@ void EthercatDeviceConfigurator::setup(bool startup)
         {
 #ifdef _MAGNECKO_EPM_FOUND_
             std::string configuration_file_path = handleFilePath(entry.config_file_path,m_setup_file_path);
-            slave = magnecko_epm_sdk::magneckoEPM::deviceFromFile(configuration_file_path, entry.name, entry.ethercat_address, entry.actuator_number);
+            slave = magnecko_epm_sdk::magneckoEPM::deviceFromFile(configuration_file_path, entry.name, entry.ethercat_address, *entry.actuator_number);
 #else
             throw std::runtime_error(" [EthercatDeviceConfigurator] magnecko_epm_sdk not availabe.");
 #endif

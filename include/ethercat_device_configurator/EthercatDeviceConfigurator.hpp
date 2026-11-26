@@ -15,6 +15,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <ethercat_sdk_master/EthercatMaster.hpp>
 #include <type_traits>
@@ -44,7 +45,8 @@ public:
         EthercatSlaveType type;
         std::string name;
         std::string config_file_path;
-        uint32_t actuator_number;
+        // Not given: the drive doesn't check its actuator number.
+        std::optional<uint32_t> actuator_number;
 
         uint32_t ethercat_address;
         std::string ethercat_bus;
@@ -134,6 +136,12 @@ private:
      * @param path
      */
     void parseFile(std::string path);
+    /**
+     * @brief resolveAutoBus - replaces the ethercat_bus "auto" of all entries by the one wired interface on which
+     * EtherCAT slaves answer
+     * @throw std::runtime_error if slaves answer on no interface or on several
+     */
+    void resolveAutoBus();
     /**
      * @brief setup - uses the m_slave_entries to create slaves and bus masters. Attaches the slaves to the bus master. Can startup the bus
      * @param startup - true: call startup for all busses
