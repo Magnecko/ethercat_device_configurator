@@ -56,7 +56,9 @@
 
 /*std*/
 #include <algorithm>
+#include <chrono>
 #include <sstream>
+#include <thread>
 #if __GNUC__ < 8
 #include <experimental/filesystem>
 #else
@@ -76,6 +78,7 @@ static bool path_exists(std::string& path)
 namespace
 {
 const std::string AUTO_BUS = "auto";
+const int AUTO_BUS_SCANS = 10;
 
 // Loopback, Wi-Fi and virtual interfaces don't lead to a drive, so the scan leaves them out.
 bool isScannedInterface(const std::string& name)
@@ -326,18 +329,29 @@ void EthercatDeviceConfigurator::resolveAutoBus()
 
     std::vector<std::string> found;
     std::stringstream scanned;
-    for(const auto& name : soem_interface_rsl::EthercatBusBase::getAvailableBusses())
+    // A link that was just plugged in or powered on takes a few seconds to come up.
+    for(int scan = 1; found.empty() && scan <= AUTO_BUS_SCANS; ++scan)
     {
-        if(!isScannedInterface(name))
-            continue;
-        const int slaves = soem_interface_rsl::EthercatBusBase::countSlaves(name);
-        scanned << (scanned.tellp() > 0 ? ", " : "") << name;
-        if(slaves < 0)
-            scanned << " (can't be opened, e.g. without CAP_NET_RAW)";
-        else
-            scanned << " (" << slaves << " slaves)";
-        if(slaves > 0)
-            found.push_back(name);
+        if(scan > 1)
+        {
+            MELO_INFO_STREAM("[EthercatDeviceConfigurator] ethercat_bus auto: no EtherCAT slave yet, scanning again ("
+                             << scan << "/" << AUTO_BUS_SCANS << ")");
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+        scanned.str("");
+        for(const auto& name : soem_interface_rsl::EthercatBusBase::getAvailableBusses())
+        {
+            if(!isScannedInterface(name))
+                continue;
+            const int slaves = soem_interface_rsl::EthercatBusBase::countSlaves(name);
+            scanned << (scanned.tellp() > 0 ? ", " : "") << name;
+            if(slaves < 0)
+                scanned << " (can't be opened, e.g. without CAP_NET_RAW)";
+            else
+                scanned << " (" << slaves << " slaves)";
+            if(slaves > 0)
+                found.push_back(name);
+        }
     }
     if(scanned.tellp() == 0)
         scanned << "no wired interface";
